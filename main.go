@@ -1,13 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/twharmon/goui-cli/build"
-	"github.com/twharmon/goui-cli/create"
-	"github.com/twharmon/goui-cli/serve"
+	"github.com/twharmon/gouix/build"
+	"github.com/twharmon/gouix/create"
+	"github.com/twharmon/gouix/serve"
 
 	"github.com/urfave/cli/v2"
 )
@@ -16,7 +15,7 @@ func main() {
 	os.Setenv("GOOS", "js")
 	os.Setenv("GOARCH", "wasm")
 	app := &cli.App{
-		Name:  "goui",
+		Name:  "gouix",
 		Usage: "develop applications with goui",
 		Commands: []*cli.Command{
 			{
@@ -37,9 +36,7 @@ func main() {
 				Name:  "create",
 				Usage: "create a new goui application",
 				Action: func(c *cli.Context) error {
-					args := c.Args()
-					fmt.Println(args)
-					return create.Create(args.First())
+					return create.Create(c.Args().First())
 				},
 			},
 		},

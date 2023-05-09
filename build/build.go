@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/twharmon/goui-cli/files"
-	"github.com/twharmon/goui-cli/utils"
+	"github.com/twharmon/gouix/files"
+	"github.com/twharmon/gouix/utils"
 
 	"github.com/fatih/color"
 	"github.com/twharmon/gouid"
@@ -76,7 +76,7 @@ func (b *Build) Run() error {
 	color.Green("Built successfully in %s!\n\n", dur)
 	fmt.Printf("View in your browser at %s\n\n", utils.DevServerUrl())
 	fmt.Print("To create a build for production, use ")
-	color.Blue("goui build\n\n")
+	color.Blue("gouix build\n\n")
 	fmt.Printf("Press Ctrl+C to stop\n\n")
 	return nil
 }

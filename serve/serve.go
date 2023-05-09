@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/twharmon/goui-cli/devserver"
+	"github.com/twharmon/gouix/devserver"
 )
 
 func Start() error {

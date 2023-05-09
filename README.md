@@ -1,11 +1,21 @@
-# GoUI CLI
+# GoUIX
 
-Install goui-cli:
+GoUIX is a cli tool for working with GoUI.
+
+
+
+## Installation
 ```
-go install github.com/twharmon/goui-cli@latest
+go install github.com/twharmon/gouix@latest
 ```
 
-Create a new app:
+## Usage
+Create a new app
 ```
-goui create my-app
+gouix create my-app
+```
+
+Start the development server
+```
+gouix serve
 ```

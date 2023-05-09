@@ -1,4 +1,4 @@
-module github.com/twharmon/goui-cli
+module github.com/twharmon/gouix
 
 go 1.20
 
