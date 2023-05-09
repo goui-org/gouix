@@ -3,11 +3,16 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"mime"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
+
+	"github.com/tdewolff/minify/v2"
 )
 
 func Mkdir(dirs ...string) error {
@@ -23,10 +28,27 @@ func WriteFile(path string, data []byte) error {
 	return os.WriteFile(path, data, 0755)
 }
 
-func CopyFile(src string, dst string) error {
+var minifiable = map[string]bool{
+	"text/css":               true,
+	"text/html":              true,
+	"application/javascript": true,
+}
+
+func CopyFile(src string, dst string, m *minify.M) error {
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return err
+	}
+	if m != nil {
+		ty := mime.TypeByExtension(path.Ext(src))
+		ty = strings.TrimSpace(strings.Split(ty, ";")[0])
+		if minifiable[ty] {
+			out := new(bytes.Buffer)
+			if err := m.Minify(ty, out, bytes.NewBuffer(data)); err != nil {
+				return err
+			}
+			return os.WriteFile(dst, out.Bytes(), 0755)
+		}
 	}
 	return os.WriteFile(dst, data, 0755)
 }
@@ -80,7 +102,7 @@ func ClearTerminal() {
 	}
 }
 
-func CopyDirectory(scrDir, dest string) error {
+func CopyDirectory(scrDir, dest string, m *minify.M) error {
 	entries, err := os.ReadDir(scrDir)
 	if err != nil {
 		return err
@@ -104,7 +126,7 @@ func CopyDirectory(scrDir, dest string) error {
 			if err := createIfNotExists(destPath, 0755); err != nil {
 				return err
 			}
-			if err := CopyDirectory(sourcePath, destPath); err != nil {
+			if err := CopyDirectory(sourcePath, destPath, m); err != nil {
 				return err
 			}
 		case os.ModeSymlink:
@@ -112,7 +134,7 @@ func CopyDirectory(scrDir, dest string) error {
 				return err
 			}
 		default:
-			if err := CopyFile(sourcePath, destPath); err != nil {
+			if err := CopyFile(sourcePath, destPath, m); err != nil {
 				return err
 			}
 		}

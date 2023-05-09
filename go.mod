@@ -10,6 +10,11 @@ require (
 )
 
 require (
+	github.com/tdewolff/minify/v2 v2.12.5 // indirect
+	github.com/tdewolff/parse/v2 v2.6.5 // indirect
+)
+
+require (
 	github.com/fatih/color v1.15.0
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
