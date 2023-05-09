@@ -98,3 +98,6 @@ var VSCodeSettingsJSON = []byte(`{
     },
     "go.installDependenciesWhenBuilding": false,
 }`)
+
+var GitIgnore = []byte(`.DS_Store
+build`)

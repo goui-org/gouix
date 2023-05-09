@@ -32,6 +32,9 @@ func Create(name string) error {
 	if err := utils.WriteFile(path.Join(name, "src", "app", "app.go"), files.AppGO); err != nil {
 		return fail(err)
 	}
+	if err := utils.WriteFile(path.Join(name, ".gitignore"), files.GitIgnore); err != nil {
+		return fail(err)
+	}
 	utils.ClearTerminal()
 	color.Green("Successfully created %s!\n\n", name)
 	fmt.Printf("To get started, run the following commands:\n\n")
