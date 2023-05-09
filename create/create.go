@@ -23,6 +23,9 @@ func Create(name string) error {
 	if err := utils.WriteFile(path.Join(name, "public", "index.html"), files.IndexHTML); err != nil {
 		return fail(err)
 	}
+	if err := utils.WriteFile(path.Join(name, "public", "main.css"), files.MainCSS); err != nil {
+		return fail(err)
+	}
 	if err := utils.WriteFile(path.Join(name, "go.mod"), files.GoMOD); err != nil {
 		return fail(err)
 	}
