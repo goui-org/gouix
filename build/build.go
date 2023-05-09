@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"time"
 
-	"main/files"
-	"main/utils"
+	"github.com/twharmon/goui-cli/files"
+	"github.com/twharmon/goui-cli/utils"
 
 	"github.com/fatih/color"
 	"github.com/twharmon/gouid"

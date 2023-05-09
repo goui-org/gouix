@@ -2,9 +2,10 @@ package create
 
 import (
 	"fmt"
-	"main/files"
-	"main/utils"
 	"path"
+
+	"github.com/twharmon/goui-cli/files"
+	"github.com/twharmon/goui-cli/utils"
 )
 
 func Create(name string) error {

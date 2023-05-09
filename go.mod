@@ -1,4 +1,4 @@
-module main
+module github.com/twharmon/goui-cli
 
 go 1.20
 

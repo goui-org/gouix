@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"main/build"
-	"main/utils"
+	"github.com/twharmon/goui-cli/build"
+	"github.com/twharmon/goui-cli/utils"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"

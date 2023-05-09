@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"main/build"
-	"main/create"
-	"main/serve"
+	"github.com/twharmon/goui-cli/build"
+	"github.com/twharmon/goui-cli/create"
+	"github.com/twharmon/goui-cli/serve"
 
 	"github.com/urfave/cli/v2"
 )
