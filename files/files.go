@@ -30,6 +30,7 @@ var IndexHTML = []byte(`<!DOCTYPE html>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>GoUI App</title>
+        <link rel="stylesheet" href="main.css"> 
     </head>
     <body>
         <div id="root"></div>
@@ -58,26 +59,67 @@ import (
 )
 
 func App(_ any) *goui.Node {
-	cnt, setCnt := goui.UseState(0)
+	count, setCount := goui.UseState(0)
 
 	goui.UseEffect(func() goui.EffectTeardown {
-		godom.Console.Log("count changed to %d", cnt)
+		godom.Console.Log("count is %d", count)
 		return nil
-	}, cnt)
+	}, count)
 
 	return goui.Element("div", goui.Attributes{
+		Class: "app",
 		Children: []*goui.Node{
 			goui.Element("button", goui.Attributes{
+				Class:    "app-btn",
 				Children: goui.Text("increment").Slice(),
 				OnClick: func(e *godom.MouseEvent) {
-					setCnt(func(c int) int { return c + 1 })
+					setCount(func(c int) int { return c + 1 })
 				},
 			}),
 			goui.Element("p", goui.Attributes{
-				Children: goui.Text("cnt: %d", cnt).Slice(),
+				Children: goui.Text("count: %d", count).Slice(),
 			}),
 		},
 	})
+}
+`)
+
+var MainCSS = []byte(`body {
+    margin: 0;
+    font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+    background-color: #282c34;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+    color: white;
+}
+
+.app-btn {
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    background: #25697b;
+    border: 1px solid #25697b;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.app-btn:hover {
+    background: #1f5c6d;
+    border: 1px solid #1f5c6d;
+}
+
+.app-btn:active {
+    background: #174f5f;
+    border: 1px solid #174f5f;
 }
 `)
 
