@@ -35,7 +35,6 @@ func Create(name string) error {
 	utils.ClearTerminal()
 	color.Green("Successfully created %s!\n\n", name)
 	fmt.Printf("To get started, run the following commands:\n\n")
-	fmt.Print("To create a build for production, use ")
 	color.Blue("\tcd %s\n", name)
 	color.Blue("\tgo get main/src\n")
 	color.Blue("\tgouix serve\n\n")
