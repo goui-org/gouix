@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"compress/gzip"
 	"fmt"
 	"mime"
 	"os"
@@ -26,6 +27,61 @@ func Mkdir(dirs ...string) error {
 
 func WriteFile(path string, data []byte) error {
 	return os.WriteFile(path, data, 0755)
+}
+
+func GzipSize(path string) (int64, error) {
+	fail := func(err error) error {
+		return fmt.Errorf("utils.GzipSize: %w", err)
+	}
+	buf := new(bytes.Buffer)
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return 0, fail(err)
+	}
+	gzipw := gzip.NewWriter(buf)
+	if _, err := gzipw.Write(b); err != nil {
+		return 0, fail(err)
+	}
+	if err := gzipw.Close(); err != nil {
+		return 0, fail(err)
+	}
+	return int64(buf.Len()), nil
+}
+
+func PadLeft(s string, max int) string {
+	if len(s) > max {
+		return s[len(s)-max:]
+	}
+	for len(s) < max {
+		s = " " + s
+	}
+	return s
+}
+
+func PadRight(s string, max int) string {
+	if len(s) > max {
+		return s[len(s)-max:]
+	}
+	for len(s) < max {
+		s = s + " "
+	}
+	return s
+}
+
+func FormatFileSize(b int64) string {
+	if b < 1_000 {
+		return fmt.Sprintf("%d B", b)
+	}
+	if b < 10_000 {
+		f := float64(b) / 1_000
+		return fmt.Sprintf("%0.1f KB", f)
+	}
+	if b < 1_000_000 {
+		f := float64(b) / 1_000
+		return fmt.Sprintf("%0.0f KB", f)
+	}
+	f := float64(b) / 1_000_000
+	return fmt.Sprintf("%0.1f MB", f)
 }
 
 var minifiable = map[string]bool{

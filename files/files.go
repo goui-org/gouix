@@ -16,7 +16,7 @@ ws.onclose = () => window.close()
 `)
 
 var WasmFetchJS = []byte(`const go = new Go()
-const fetched = fetch('/wasm.wasm')
+const fetched = fetch('/main.wasm')
 if ('instantiateStreaming' in WebAssembly) {
     WebAssembly.instantiateStreaming(fetched, go.importObject).then(o => go.run(o.instance))
 } else {
@@ -34,7 +34,7 @@ var IndexHTML = []byte(`<!DOCTYPE html>
     </head>
     <body>
         <div id="root"></div>
-        <script src="wasm.js"></script>
+        <script src="main.js"></script>
     </body>
 </html>`)
 
@@ -129,7 +129,7 @@ go 1.20
 
 require (
     github.com/twharmon/godom v0.0.5
-    github.com/twharmon/goui v0.0.2
+    github.com/twharmon/goui v0.0.3
 )
 `)
 

@@ -14,8 +14,3 @@ Create a new app
 ```
 gouix create my-app
 ```
-
-Start the development server
-```
-gouix serve
-```

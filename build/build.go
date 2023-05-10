@@ -3,11 +3,9 @@ package build
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"os"
 	"path"
 	"runtime"
-	"strconv"
 	"time"
 
 	"github.com/tdewolff/minify/v2"
@@ -40,78 +38,106 @@ func New() *Build {
 	return b
 }
 
-func (b *Build) TmpDir() string {
-	return path.Join(os.TempDir(), b.id)
+func (b *Build) BuildDir() string {
+	if os.Getenv("DEGUB") == "true" {
+		return path.Join(os.TempDir(), b.id)
+	}
+	return "build"
 }
 
 func (b *Build) Run() error {
+	if os.Getenv("DEBUG") == "true" {
+		return b.runDebug()
+	}
+	return b.runProd()
+}
+
+func (b *Build) runProd() error {
 	fail := func(err error) error {
-		return fmt.Errorf("build.Run: %w", err)
+		return fmt.Errorf("build.runProd: %w", err)
 	}
 	start := time.Now()
-	outDir := "build"
+	outDir := b.BuildDir()
 	utils.ClearTerminal()
 	fmt.Println("generating static assets...")
-	resetOutDir := func(dir string) error {
-		if err := os.RemoveAll(outDir); err != nil {
-			return fail(err)
-		}
-		if err := utils.Mkdir(outDir); err != nil {
-			return fail(err)
-		}
-		return nil
+	if err := b.resetOutDir(); err != nil {
+		return fail(err)
 	}
-	if os.Getenv("DEBUG") == "true" {
-		outDir = b.TmpDir()
-		if !b.staticAssetsCopied {
-			if err := resetOutDir(outDir); err != nil {
-				return fail(err)
-			}
-			wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
-			if err != nil {
-				return fail(err)
-			}
-			bundle := bytes.Join([][]byte{files.DebugJS, wasmExec, files.WasmFetchJS}, []byte("\n"))
-			if err := utils.WriteFile(path.Join(outDir, "wasm.js"), bundle); err != nil {
-				return fail(err)
-			}
-			b.staticAssetsCopied = true
-		}
-	} else {
-		if err := resetOutDir(outDir); err != nil {
-			return fail(err)
-		}
-		wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
-		if err != nil {
-			return fail(err)
-		}
-		bundle := bytes.Join([][]byte{wasmExec, files.WasmFetchJS}, []byte("\n"))
-		out := new(bytes.Buffer)
-		if err := b.minify.Minify("application/javascript", out, bytes.NewBuffer(bundle)); err != nil {
-			return fail(err)
-		}
-		if err := utils.WriteFile(path.Join(outDir, "wasm.js"), out.Bytes()); err != nil {
-			return fail(err)
-		}
+	wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
+	if err != nil {
+		return fail(err)
+	}
+	bundle := bytes.Join([][]byte{wasmExec, files.WasmFetchJS}, []byte("\n"))
+	out := new(bytes.Buffer)
+	if err := b.minify.Minify("application/javascript", out, bytes.NewBuffer(bundle)); err != nil {
+		return fail(err)
+	}
+	if err := utils.WriteFile(path.Join(outDir, "main.js"), out.Bytes()); err != nil {
+		return fail(err)
 	}
 	if err := utils.CopyDirectory("public", outDir, b.minify); err != nil {
 		return fail(err)
 	}
-	fmt.Println("compiling src...")
 	if err := b.compile(outDir); err != nil {
 		return fail(err)
 	}
 	dur := time.Since(start).Round(time.Microsecond * 100)
 	utils.ClearTerminal()
 	color.Green("Built successfully in %s!\n\n", dur)
-	if os.Getenv("DEBUG") == "true" {
-		fmt.Printf("View in your browser at %s\n\n", utils.DevServerUrl())
-		fmt.Print("To create a build for production, use ")
-		color.Blue("gouix build\n\n")
-		fmt.Printf("Press Ctrl+C to stop\n")
-	} else {
-		b.reportBuildSizes(outDir)
+	b.reportBuildSizes(outDir)
+	fmt.Println()
+	return nil
+}
+
+func (b *Build) resetOutDir() error {
+	fail := func(err error) error {
+		return fmt.Errorf("build.resetOutDir: %w", err)
 	}
+	dir := b.BuildDir()
+	if err := os.RemoveAll(dir); err != nil {
+		return fail(err)
+	}
+	if err := utils.Mkdir(dir); err != nil {
+		return fail(err)
+	}
+	return nil
+}
+
+func (b *Build) runDebug() error {
+	fail := func(err error) error {
+		return fmt.Errorf("build.runDebug: %w", err)
+	}
+	outDir := b.BuildDir()
+	start := time.Now()
+	utils.ClearTerminal()
+	fmt.Println("generating static assets...")
+	if !b.staticAssetsCopied {
+		if err := b.resetOutDir(); err != nil {
+			return fail(err)
+		}
+		wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
+		if err != nil {
+			return fail(err)
+		}
+		bundle := bytes.Join([][]byte{files.DebugJS, wasmExec, files.WasmFetchJS}, []byte("\n"))
+		if err := utils.WriteFile(path.Join(outDir, "main.js"), bundle); err != nil {
+			return fail(err)
+		}
+		b.staticAssetsCopied = true
+	}
+	if err := utils.CopyDirectory("public", outDir, b.minify); err != nil {
+		return fail(err)
+	}
+	if err := b.compile(outDir); err != nil {
+		return fail(err)
+	}
+	dur := time.Since(start).Round(time.Microsecond * 100)
+	utils.ClearTerminal()
+	color.Green("Built successfully in %s!\n\n", dur)
+	fmt.Printf("View in your browser at %s\n\n", utils.DevServerUrl())
+	fmt.Print("To create a build for production, use ")
+	color.Blue("gouix build\n\n")
+	fmt.Printf("Press Ctrl+C to stop\n")
 	fmt.Println()
 	return nil
 }
@@ -120,41 +146,43 @@ func (b *Build) reportBuildSizes(dir string) error {
 	fail := func(err error) error {
 		return fmt.Errorf("build.reportBuildSizes: %w", err)
 	}
-	padIntLeft := func(i int) string {
-		s := strconv.Itoa(i)
-		for len(s) < 10 {
-			s = " " + s
-		}
-		return s
-	}
-	padStrRight := func(s string) string {
-		max := 20
-		if len(s) > max {
-			s = s[len(s)-max:]
-		}
-		for len(s) < max {
-			s = s + " "
-		}
-		return s
-	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return fail(err)
 	}
+	fmt.Printf("%s%s%s\n", utils.PadRight("file", 15), utils.PadLeft("raw", 15), utils.PadLeft("gzip", 15))
+	fmt.Printf("---------------------------------------------\n")
 	for _, entry := range entries {
+		fullPath := path.Join(dir, entry.Name())
 		if entry.IsDir() {
-			return b.reportBuildSizes(path.Join(dir, entry.Name()))
+			return b.reportBuildSizes(fullPath)
 		}
-		fi, err := os.Stat(path.Join(dir, entry.Name()))
+		fi, err := os.Stat(fullPath)
 		if err != nil {
 			return fail(err)
 		}
-		size := float64(fi.Size())
-		fmt.Printf("\t%s%s KB\n", padStrRight(fi.Name()), padIntLeft(int(math.Round(size/1000))))
+		gzipSize, err := utils.GzipSize(fullPath)
+		if err != nil {
+			return fail(err)
+		}
+		fmt.Printf(
+			"%s%s%s\n",
+			utils.PadRight(fi.Name(), 15),
+			utils.PadLeft(utils.FormatFileSize(fi.Size()), 15),
+			utils.PadLeft(utils.FormatFileSize(gzipSize), 15),
+		)
 	}
 	return nil
 }
 
 func (b *Build) compile(outDir string) error {
-	return utils.Command("go", "build", "-o", path.Join(outDir, "wasm.wasm"), path.Join("src", "main.go"))
+	fmt.Println("compiling src...")
+	if err := utils.Command("go", "build", "-o", path.Join(outDir, "main.wasm"), `-ldflags=-s -w`, path.Join("src", "main.go")); err != nil {
+		return err
+	}
+	if os.Getenv("DEBUG") != "true" {
+		fmt.Println("optimizing build...")
+		return utils.Command("wasm-opt", "-Oz", "--enable-bulk-memory", "-o", path.Join(outDir, "main.wasm"), path.Join(outDir, "main.wasm"))
+	}
+	return nil
 }

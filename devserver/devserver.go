@@ -51,7 +51,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown() error {
-	if err := os.RemoveAll(s.build.TmpDir()); err != nil {
+	if err := os.RemoveAll(s.build.BuildDir()); err != nil {
 		return fmt.Errorf("build.Run: %w", err)
 	}
 	return s.watcher.Close()
@@ -59,7 +59,7 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) files() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, path.Join(s.build.TmpDir(), r.URL.Path))
+		http.ServeFile(w, r, path.Join(s.build.BuildDir(), r.URL.Path))
 	}
 }
 
