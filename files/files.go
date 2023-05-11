@@ -128,8 +128,8 @@ var GoMOD = []byte(`module main
 go 1.20
 
 require (
-    github.com/twharmon/godom v0.0.5
-    github.com/twharmon/goui v0.0.3
+    github.com/twharmon/godom v0.0.7
+    github.com/twharmon/goui v0.0.4
 )
 `)
 
