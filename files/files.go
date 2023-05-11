@@ -38,6 +38,8 @@ var IndexHTML = []byte(`<!DOCTYPE html>
     </body>
 </html>`)
 
+var ReadmeMD = []byte("# GoUI App\n\nIntall gouix\n```\ngo install github.com/twharmon/gouix@latest\n```\n\nStart the development server\n```\ngouix serve\n```\n\nCreate a production build\n```\ngouix build\n```\n")
+
 var MainGO = []byte(`package main
 
 import (

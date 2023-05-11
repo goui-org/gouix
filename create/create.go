@@ -39,6 +39,9 @@ func Create(name string) error {
 	if err := utils.WriteFile(path.Join(name, ".gitignore"), files.GitIgnore); err != nil {
 		return fail(err)
 	}
+	if err := utils.WriteFile(path.Join(name, "README.md"), files.ReadmeMD); err != nil {
+		return fail(err)
+	}
 	goGetSuccess := goGet(name)
 	utils.ClearTerminal()
 	color.Green("Successfully created %s!\n\n", name)
