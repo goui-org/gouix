@@ -56,6 +56,8 @@ func main() {
 var AppGO = []byte(`package app
 
 import (
+	"fmt"
+
 	"github.com/twharmon/godom"
 	"github.com/twharmon/goui"
 )
@@ -131,7 +133,7 @@ go 1.20
 
 require (
     github.com/twharmon/godom v0.0.7
-    github.com/twharmon/goui v0.0.5
+    github.com/twharmon/goui v0.0.6
 )
 `)
 
