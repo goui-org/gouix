@@ -39,7 +39,7 @@ func New() *Build {
 }
 
 func (b *Build) BuildDir() string {
-	if os.Getenv("DEGUB") == "true" {
+	if os.Getenv("DEBUG") == "true" {
 		return path.Join(os.TempDir(), b.id)
 	}
 	return "build"

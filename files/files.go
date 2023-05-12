@@ -133,7 +133,7 @@ go 1.20
 
 require (
     github.com/twharmon/godom v0.0.7
-    github.com/twharmon/goui v0.0.6
+    github.com/twharmon/goui v0.0.7
 )
 `)
 
