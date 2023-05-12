@@ -73,13 +73,13 @@ func App(_ any) *goui.Node {
 		Children: []*goui.Node{
 			goui.Element("button", goui.Attributes{
 				Class:    "app-btn",
-				Children: goui.Text("increment").Slice(),
-				OnClick: func(e *godom.MouseEvent) {
+				Children: "increment",
+				OnClick: goui.UseCallback(func(e *godom.MouseEvent) {
 					setCount(func(c int) int { return c + 1 })
-				},
+				}),
 			}),
 			goui.Element("p", goui.Attributes{
-				Children: goui.Text("count: %d", count).Slice(),
+				Children: fmt.Sprintf("count: %d", count),
 			}),
 		},
 	})
@@ -131,7 +131,7 @@ go 1.20
 
 require (
     github.com/twharmon/godom v0.0.7
-    github.com/twharmon/goui v0.0.4
+    github.com/twharmon/goui v0.0.5
 )
 `)
 
