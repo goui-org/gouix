@@ -180,9 +180,12 @@ func (b *Build) compile(outDir string) error {
 	if err := utils.Command("go", "build", "-o", path.Join(outDir, "main.wasm"), `-ldflags=-s -w`, path.Join("src", "main.go")); err != nil {
 		return err
 	}
-	if os.Getenv("DEBUG") != "true" {
-		fmt.Println("optimizing build...")
-		return utils.Command("wasm-opt", "-Oz", "--enable-bulk-memory", "-o", path.Join(outDir, "main.wasm"), path.Join(outDir, "main.wasm"))
-	}
+	// TODO: make it to where you can opt in to use wasm-opt
+	// if os.Getenv("DEBUG") != "true" {
+	// 	fmt.Println("optimizing build...")
+	// 	if err := utils.Command("wasm-opt", "-Oz", "--enable-bulk-memory", "-o", path.Join(outDir, "main.wasm"), path.Join(outDir, "main.wasm")); err != nil {
+	// 		return nil
+	// 	}
+	// }
 	return nil
 }
