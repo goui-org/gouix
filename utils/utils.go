@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/tdewolff/minify/v2"
 )
@@ -172,11 +171,6 @@ func CopyDirectory(scrDir, dest string, m *minify.M) error {
 			return err
 		}
 
-		stat, ok := fileInfo.Sys().(*syscall.Stat_t)
-		if !ok {
-			return fmt.Errorf("failed to get raw syscall.Stat_t data for '%s'", sourcePath)
-		}
-
 		switch fileInfo.Mode() & os.ModeType {
 		case os.ModeDir:
 			if err := createIfNotExists(destPath, 0755); err != nil {
@@ -185,18 +179,10 @@ func CopyDirectory(scrDir, dest string, m *minify.M) error {
 			if err := CopyDirectory(sourcePath, destPath, m); err != nil {
 				return err
 			}
-		case os.ModeSymlink:
-			if err := copySymLink(sourcePath, destPath); err != nil {
-				return err
-			}
 		default:
 			if err := CopyFile(sourcePath, destPath, m); err != nil {
 				return err
 			}
-		}
-
-		if err := os.Lchown(destPath, int(stat.Uid), int(stat.Gid)); err != nil {
-			return err
 		}
 
 		fInfo, err := entry.Info()
@@ -232,12 +218,4 @@ func createIfNotExists(dir string, perm os.FileMode) error {
 	}
 
 	return nil
-}
-
-func copySymLink(source, dest string) error {
-	link, err := os.Readlink(source)
-	if err != nil {
-		return err
-	}
-	return os.Symlink(link, dest)
 }
