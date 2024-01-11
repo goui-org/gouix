@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/tdewolff/minify/v2"
@@ -23,11 +25,13 @@ type Build struct {
 	id                 string
 	staticAssetsCopied bool
 	minify             *minify.M
+	tiny               bool
 }
 
-func New() *Build {
+func New(tiny bool) *Build {
 	b := &Build{
-		id: gouid.String(8, gouid.MixedCaseAlpha),
+		id:   gouid.String(8, gouid.MixedCaseAlpha),
+		tiny: tiny,
 	}
 	if os.Getenv("DEBUG") != "true" {
 		b.minify = minify.New()
@@ -63,7 +67,17 @@ func (b *Build) runProd() error {
 	if err := b.resetOutDir(); err != nil {
 		return fail(err)
 	}
-	wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
+	wasmExecPath := ""
+	if b.tiny {
+		out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
+		if err != nil {
+			return fail(err)
+		}
+		wasmExecPath = path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
+	} else {
+		wasmExecPath = path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js")
+	}
+	wasmExec, err := os.ReadFile(wasmExecPath)
 	if err != nil {
 		return fail(err)
 	}
@@ -115,11 +129,21 @@ func (b *Build) runDebug() error {
 		if err := b.resetOutDir(); err != nil {
 			return fail(err)
 		}
-		wasmExec, err := os.ReadFile(path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js"))
+		wasmExecPath := ""
+		if b.tiny {
+			out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
+			if err != nil {
+				return fail(err)
+			}
+			wasmExecPath = path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
+		} else {
+			wasmExecPath = path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js")
+		}
+		wasmExec, err := os.ReadFile(wasmExecPath)
 		if err != nil {
 			return fail(err)
 		}
-		bundle := bytes.Join([][]byte{files.DebugJS, wasmExec, files.WasmFetchJS}, []byte("\n"))
+		bundle := bytes.Join([][]byte{wasmExec, files.DebugJS, files.WasmFetchJS}, []byte("\n"))
 		if err := utils.WriteFile(path.Join(outDir, "main.js"), bundle); err != nil {
 			return fail(err)
 		}
@@ -177,15 +201,17 @@ func (b *Build) reportBuildSizes(dir string) error {
 
 func (b *Build) compile(outDir string) error {
 	fmt.Println("compiling src...")
-	if err := utils.Command("go", "build", "-o", path.Join(outDir, "main.wasm"), `-ldflags=-s -w`, path.Join("src", "main.go")); err != nil {
-		return err
+	if b.tiny {
+		// if os.Getenv("DEBUG") != "true" {
+		// } else {
+		// }
+		if err := utils.Command("tinygo", "build", "-target=wasm", "-opt=2", "-no-debug", "-panic=trap", "-o", path.Join(outDir, "main.wasm"), path.Join("src", "main.go")); err != nil {
+			return err
+		}
+	} else {
+		if err := utils.Command("go", "build", "-o", path.Join(outDir, "main.wasm"), `-ldflags=-s -w`, path.Join("src", "main.go")); err != nil {
+			return err
+		}
 	}
-	// TODO: make it to where you can opt in to use wasm-opt
-	// if os.Getenv("DEBUG") != "true" {
-	// 	fmt.Println("optimizing build...")
-	// 	if err := utils.Command("wasm-opt", "-Oz", "--enable-bulk-memory", "-o", path.Join(outDir, "main.wasm"), path.Join(outDir, "main.wasm")); err != nil {
-	// 		return nil
-	// 	}
-	// }
 	return nil
 }

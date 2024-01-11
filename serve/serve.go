@@ -8,13 +8,13 @@ import (
 	"github.com/twharmon/gouix/devserver"
 )
 
-func Start() error {
+func Start(tiny bool, proxy string) error {
 	os.Setenv("DEBUG", "true")
 	port := os.Getenv("PORT")
 	if port == "" {
 		os.Setenv("PORT", "3000")
 	}
-	server, err := devserver.New()
+	server, err := devserver.New(tiny, proxy)
 	if err != nil {
 		return fmt.Errorf("devserver.New: %w", err)
 	}

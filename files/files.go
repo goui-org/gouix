@@ -16,7 +16,7 @@ ws.onclose = () => window.close()
 `)
 
 var WasmFetchJS = []byte(`const go = new Go()
-const fetched = fetch('/main.wasm')
+const fetched = fetch('main.wasm')
 if ('instantiateStreaming' in WebAssembly) {
     WebAssembly.instantiateStreaming(fetched, go.importObject).then(o => go.run(o.instance))
 } else {

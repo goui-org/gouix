@@ -16,20 +16,30 @@ func main() {
 	os.Setenv("GOARCH", "wasm")
 	app := &cli.App{
 		Name:  "gouix",
-		Usage: "develop applications with goui",
+		Usage: "develop user interfaces with goui",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "tinygo",
+				Usage: "use the tinygo compiler",
+			},
+			&cli.StringFlag{
+				Name:  "proxy",
+				Usage: "proxy requests",
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:  "serve",
 				Usage: "start develpoment server",
 				Action: func(c *cli.Context) error {
-					return serve.Start()
+					return serve.Start(c.Bool("tinygo"), c.String("proxy"))
 				},
 			},
 			{
 				Name:  "build",
 				Usage: "build application",
 				Action: func(c *cli.Context) error {
-					return build.New().Run()
+					return build.New(c.Bool("tinygo")).Run()
 				},
 			},
 			{

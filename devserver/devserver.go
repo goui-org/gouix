@@ -2,12 +2,15 @@ package devserver
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,12 +29,14 @@ type Server struct {
 	watcher   *fsnotify.Watcher
 	loaded    bool
 	build     *build.Build
+	proxy     string
 }
 
-func New() (*Server, error) {
+func New(tiny bool, proxy string) (*Server, error) {
 	os.Setenv("DEBUG", "true")
 	s := &Server{
-		build: build.New(),
+		build: build.New(tiny),
+		proxy: proxy,
 	}
 	if err := s.watchAll(); err != nil {
 		return nil, fmt.Errorf("devserver.New: %w", err)
@@ -59,6 +64,27 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) files() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		filePath := path.Join(s.build.BuildDir(), r.URL.Path)
+		if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
+			filePath = strings.TrimPrefix(filePath, s.build.BuildDir())
+			resp, err := http.Get(s.proxy + filePath)
+			if err != nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+			defer resp.Body.Close()
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			header := w.Header()
+			for k, v := range resp.Header {
+				header.Set(k, strings.Join(v, ";"))
+			}
+			w.Write(b)
+			return
+		}
 		http.ServeFile(w, r, path.Join(s.build.BuildDir(), r.URL.Path))
 	}
 }
