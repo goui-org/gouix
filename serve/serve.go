@@ -5,18 +5,15 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/twharmon/gouix/devserver"
+	"github.com/twharmon/gouix/config"
+	"github.com/twharmon/gouix/server"
 )
 
-func Start(tiny bool, proxy string) error {
+func Start(cfg *config.Config) error {
 	os.Setenv("DEBUG", "true")
-	port := os.Getenv("PORT")
-	if port == "" {
-		os.Setenv("PORT", "3000")
-	}
-	server, err := devserver.New(tiny, proxy)
+	server, err := server.New(cfg)
 	if err != nil {
-		return fmt.Errorf("devserver.New: %w", err)
+		return fmt.Errorf("serve.Start: %w", err)
 	}
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

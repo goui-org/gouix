@@ -1,4 +1,4 @@
-package devserver
+package server
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/twharmon/gouix/build"
+	"github.com/twharmon/gouix/config"
 	"github.com/twharmon/gouix/utils"
 
 	"github.com/fsnotify/fsnotify"
@@ -29,14 +30,14 @@ type Server struct {
 	watcher   *fsnotify.Watcher
 	loaded    bool
 	build     *build.Build
-	proxy     string
+	config    *config.Config
 }
 
-func New(tiny bool, proxy string) (*Server, error) {
+func New(cfg *config.Config) (*Server, error) {
 	os.Setenv("DEBUG", "true")
 	s := &Server{
-		build: build.New(tiny),
-		proxy: proxy,
+		config: cfg,
+		build:  build.New(cfg),
 	}
 	if err := s.watchAll(); err != nil {
 		return nil, fmt.Errorf("devserver.New: %w", err)
@@ -52,7 +53,7 @@ func (s *Server) Run() error {
 		go s.reportBuildError(fmt.Errorf("devserver.Server.Run: %s", err))
 	}
 	s.openBrowser()
-	return http.ListenAndServe(utils.DevServerPort(), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", s.config.Server.Port), nil)
 }
 
 func (s *Server) Shutdown() error {
@@ -67,7 +68,7 @@ func (s *Server) files() http.HandlerFunc {
 		filePath := path.Join(s.build.BuildDir(), r.URL.Path)
 		if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
 			filePath = strings.TrimPrefix(filePath, s.build.BuildDir())
-			resp, err := http.Get(s.proxy + filePath)
+			resp, err := http.Get(s.config.Server.Proxy + filePath)
 			if err != nil {
 				w.WriteHeader(http.StatusNotFound)
 				return
@@ -199,7 +200,7 @@ func (s *Server) sendMessage(msg string) {
 }
 
 func (s *Server) openBrowser() {
-	url := utils.DevServerUrl()
+	url := fmt.Sprintf("http://localhost:%d", s.config.Server.Port)
 	var err error
 	switch runtime.GOOS {
 	case "linux":

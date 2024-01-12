@@ -121,14 +121,6 @@ func Command(name string, args ...string) error {
 	return nil
 }
 
-func DevServerUrl() string {
-	return fmt.Sprintf("http://localhost:%s", os.Getenv("PORT"))
-}
-
-func DevServerPort() string {
-	return fmt.Sprintf(":%s", os.Getenv("PORT"))
-}
-
 var clear map[string]func()
 
 func init() {

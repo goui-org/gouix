@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/twharmon/gouix/build"
+	"github.com/twharmon/gouix/config"
 	"github.com/twharmon/gouix/create"
 	"github.com/twharmon/gouix/serve"
 
@@ -12,34 +13,22 @@ import (
 )
 
 func main() {
-	os.Setenv("GOOS", "js")
-	os.Setenv("GOARCH", "wasm")
 	app := &cli.App{
 		Name:  "gouix",
 		Usage: "develop user interfaces with goui",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "tinygo",
-				Usage: "use the tinygo compiler",
-			},
-			&cli.StringFlag{
-				Name:  "proxy",
-				Usage: "proxy requests",
-			},
-		},
 		Commands: []*cli.Command{
 			{
 				Name:  "serve",
 				Usage: "start develpoment server",
 				Action: func(c *cli.Context) error {
-					return serve.Start(c.Bool("tinygo"), c.String("proxy"))
+					return serve.Start(config.Get())
 				},
 			},
 			{
 				Name:  "build",
 				Usage: "build application",
 				Action: func(c *cli.Context) error {
-					return build.New(c.Bool("tinygo")).Run()
+					return build.New(config.Get()).Run()
 				},
 			},
 			{

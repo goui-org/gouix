@@ -30,6 +30,9 @@ func Create(name string) error {
 	if err := utils.WriteFile(path.Join(name, "go.mod"), files.GoMOD); err != nil {
 		return fail(err)
 	}
+	if err := utils.WriteFile(path.Join(name, "goui.yml"), files.GoUIYML); err != nil {
+		return fail(err)
+	}
 	if err := utils.WriteFile(path.Join(name, "src", "main.go"), files.MainGO); err != nil {
 		return fail(err)
 	}

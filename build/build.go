@@ -14,6 +14,7 @@ import (
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
 	"github.com/tdewolff/minify/v2/js"
+	"github.com/twharmon/gouix/config"
 	"github.com/twharmon/gouix/files"
 	"github.com/twharmon/gouix/utils"
 
@@ -25,13 +26,13 @@ type Build struct {
 	id                 string
 	staticAssetsCopied bool
 	minify             *minify.M
-	tiny               bool
+	config             *config.Config
 }
 
-func New(tiny bool) *Build {
+func New(cfg *config.Config) *Build {
 	b := &Build{
-		id:   gouid.String(8, gouid.MixedCaseAlpha),
-		tiny: tiny,
+		id:     gouid.String(8, gouid.Secure32Char),
+		config: cfg,
 	}
 	if os.Getenv("DEBUG") != "true" {
 		b.minify = minify.New()
@@ -68,7 +69,7 @@ func (b *Build) runProd() error {
 		return fail(err)
 	}
 	wasmExecPath := ""
-	if b.tiny {
+	if b.config.Build.Compiler == "tinygo" {
 		out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
 		if err != nil {
 			return fail(err)
@@ -130,7 +131,7 @@ func (b *Build) runDebug() error {
 			return fail(err)
 		}
 		wasmExecPath := ""
-		if b.tiny {
+		if b.config.Build.Compiler == "tinygo" {
 			out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
 			if err != nil {
 				return fail(err)
@@ -158,7 +159,7 @@ func (b *Build) runDebug() error {
 	dur := time.Since(start).Round(time.Microsecond * 100)
 	utils.ClearTerminal()
 	color.Green("Built successfully in %s!\n\n", dur)
-	fmt.Printf("View in your browser at %s\n\n", utils.DevServerUrl())
+	fmt.Printf("View in your browser at http://localhost:%d\n\n", b.config.Server.Port)
 	fmt.Print("To create a build for production, use ")
 	color.Blue("gouix build\n\n")
 	fmt.Printf("Press Ctrl+C to stop\n")
@@ -190,6 +191,7 @@ func (b *Build) reportBuildSizes(dir string) error {
 			return fail(err)
 		}
 		fmt.Printf(
+
 			"%s%s%s\n",
 			utils.PadRight(fi.Name(), 15),
 			utils.PadLeft(utils.FormatFileSize(fi.Size()), 15),
@@ -201,17 +203,46 @@ func (b *Build) reportBuildSizes(dir string) error {
 
 func (b *Build) compile(outDir string) error {
 	fmt.Println("compiling src...")
-	if b.tiny {
-		// if os.Getenv("DEBUG") != "true" {
-		// } else {
-		// }
-		if err := utils.Command("tinygo", "build", "-target=wasm", "-opt=2", "-no-debug", "-panic=trap", "-o", path.Join(outDir, "main.wasm"), path.Join("src", "main.go")); err != nil {
+	src := path.Join("src", "main.go")
+	out := path.Join(outDir, "main.wasm")
+	switch b.config.Build.Compiler {
+	case "tinygo":
+		parts := []string{
+			"build",
+			"-target=wasm",
+			"-o",
+			out,
+			fmt.Sprintf("-panic=%s", b.config.Build.Panic),
+			fmt.Sprintf("-opt=%s", b.config.Build.Opt),
+		}
+		if !b.config.Build.Debug {
+			parts = append(parts, "-no-debug")
+		}
+		parts = append(parts, src)
+		if err := utils.Command("tinygo", parts...); err != nil {
 			return err
 		}
-	} else {
-		if err := utils.Command("go", "build", "-o", path.Join(outDir, "main.wasm"), `-ldflags=-s -w`, path.Join("src", "main.go")); err != nil {
+	case "go":
+		os.Setenv("GOOS", "js")
+		os.Setenv("GOARCH", "wasm")
+		parts := []string{"build", "-o", out}
+		if b.config.Build.LDFlags != "" {
+			parts = append(parts, fmt.Sprintf(`-ldflags="%s"`, b.config.Build.LDFlags))
+		}
+		parts = append(parts, src)
+		if err := utils.Command("go", parts...); err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("compiler %s not supported; must be go or tinygo", b.config.Build.Compiler)
+	}
+	if b.config.Build.WASMOpt {
+		parts := []string{"-O4", "-o", out}
+		if b.config.Build.NoTraps {
+			parts = append(parts, "-tnh")
+		}
+		parts = append(parts, out)
+		return utils.Command("wasm-opt", parts...)
 	}
 	return nil
 }
