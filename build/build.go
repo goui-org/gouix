@@ -244,7 +244,7 @@ func (b *Build) compile(outDir string) error {
 		return fmt.Errorf("compiler %s not supported; must be go or tinygo", b.config.Build.Compiler)
 	}
 	if b.prod && b.config.Build.WASMOpt {
-		parts := []string{"-O4", "--dce", "--enable-bulk-memory", "-o", out}
+		parts := []string{"-O4", "-n", "--enable-bulk-memory", "-o", out}
 		if b.config.Build.NoTraps {
 			parts = append(parts, "-tnh")
 		}
