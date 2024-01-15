@@ -27,14 +27,16 @@ type Build struct {
 	staticAssetsCopied bool
 	minify             *minify.M
 	config             *config.Config
+	prod               bool
 }
 
 func New(cfg *config.Config) *Build {
 	b := &Build{
 		id:     gouid.String(8, gouid.Secure32Char),
 		config: cfg,
+		prod:   os.Getenv("DEBUG") != "true",
 	}
-	if os.Getenv("DEBUG") != "true" {
+	if b.prod {
 		b.minify = minify.New()
 		b.minify.AddFunc("text/css", css.Minify)
 		b.minify.AddFunc("text/html", html.Minify)
@@ -212,11 +214,16 @@ func (b *Build) compile(outDir string) error {
 			"-target=wasm",
 			"-o",
 			out,
-			fmt.Sprintf("-panic=%s", b.config.Build.Panic),
-			fmt.Sprintf("-opt=%s", b.config.Build.Opt),
 		}
-		if !b.config.Build.Debug {
-			parts = append(parts, "-no-debug")
+		if b.prod {
+			parts = append(
+				parts,
+				fmt.Sprintf("-panic=%s", b.config.Build.Panic),
+				fmt.Sprintf("-opt=%s", b.config.Build.Opt),
+			)
+			if !b.config.Build.Debug {
+				parts = append(parts, "-no-debug")
+			}
 		}
 		parts = append(parts, src)
 		if err := utils.Command("tinygo", parts...); err != nil {
@@ -236,8 +243,8 @@ func (b *Build) compile(outDir string) error {
 	default:
 		return fmt.Errorf("compiler %s not supported; must be go or tinygo", b.config.Build.Compiler)
 	}
-	if b.config.Build.WASMOpt {
-		parts := []string{"-O4", "-o", out}
+	if b.prod && b.config.Build.WASMOpt {
+		parts := []string{"-O4", "--dce", "--enable-bulk-memory", "-o", out}
 		if b.config.Build.NoTraps {
 			parts = append(parts, "-tnh")
 		}
