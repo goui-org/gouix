@@ -156,6 +156,9 @@ func CopyDirectory(scrDir, dest string, m *minify.M) error {
 	}
 	for _, entry := range entries {
 		sourcePath := filepath.Join(scrDir, entry.Name())
+		if sourcePath == "public/index.html" {
+			continue
+		}
 		destPath := filepath.Join(dest, entry.Name())
 
 		fileInfo, err := os.Stat(sourcePath)
@@ -173,18 +176,6 @@ func CopyDirectory(scrDir, dest string, m *minify.M) error {
 			}
 		default:
 			if err := CopyFile(sourcePath, destPath, m); err != nil {
-				return err
-			}
-		}
-
-		fInfo, err := entry.Info()
-		if err != nil {
-			return err
-		}
-
-		isSymlink := fInfo.Mode()&os.ModeSymlink != 0
-		if !isSymlink {
-			if err := os.Chmod(destPath, fInfo.Mode()); err != nil {
 				return err
 			}
 		}

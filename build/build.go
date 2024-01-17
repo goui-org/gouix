@@ -3,6 +3,7 @@ package build
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -85,11 +86,7 @@ func (b *Build) runProd() error {
 		return fail(err)
 	}
 	bundle := bytes.Join([][]byte{wasmExec, files.WasmFetchJS}, []byte("\n"))
-	out := new(bytes.Buffer)
-	if err := b.minify.Minify("application/javascript", out, bytes.NewBuffer(bundle)); err != nil {
-		return fail(err)
-	}
-	if err := utils.WriteFile(path.Join(outDir, "main.js"), out.Bytes()); err != nil {
+	if err := b.bundleIndexHTML(bundle, outDir); err != nil {
 		return fail(err)
 	}
 	if err := utils.CopyDirectory("public", outDir, b.minify); err != nil {
@@ -103,6 +100,38 @@ func (b *Build) runProd() error {
 	color.Green("Built successfully in %s!\n\n", dur)
 	b.reportBuildSizes(outDir)
 	fmt.Println()
+	return nil
+}
+
+func (b *Build) bundleIndexHTML(js []byte, outDir string) error {
+	fail := func(err error) error {
+		return fmt.Errorf("build.copyIndexHTML: %w", err)
+	}
+	indexHTML, err := os.Open(path.Join("public", "index.html"))
+	if err != nil {
+		return fail(err)
+	}
+	indexHTMLBytes, err := io.ReadAll(indexHTML)
+	if err != nil {
+		return fail(err)
+	}
+	script := []byte("<script>")
+	script = append(script, js...)
+	script = append(script, []byte("</script></body>")...)
+	indexHTMLBytes = bytes.Replace(indexHTMLBytes, []byte("</body>"), script, 1)
+	outIndexHTML, err := os.Create(path.Join(outDir, "index.html"))
+	if err != nil {
+		return fail(err)
+	}
+	if b.minify != nil {
+		if err := b.minify.Minify("text/html", outIndexHTML, bytes.NewReader(indexHTMLBytes)); err != nil {
+			return fail(err)
+		}
+	} else {
+		if _, err := outIndexHTML.Write(indexHTMLBytes); err != nil {
+			return fail(err)
+		}
+	}
 	return nil
 }
 
@@ -147,7 +176,7 @@ func (b *Build) runDebug() error {
 			return fail(err)
 		}
 		bundle := bytes.Join([][]byte{wasmExec, files.DebugJS, files.WasmFetchJS}, []byte("\n"))
-		if err := utils.WriteFile(path.Join(outDir, "main.js"), bundle); err != nil {
+		if err := b.bundleIndexHTML(bundle, outDir); err != nil {
 			return fail(err)
 		}
 		b.staticAssetsCopied = true

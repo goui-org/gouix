@@ -34,7 +34,6 @@ var IndexHTML = []byte(`<!DOCTYPE html>
     </head>
     <body>
         <div id="root"></div>
-        <script src="main.js"></script>
     </body>
 </html>`)
 
@@ -145,8 +144,7 @@ var VSCodeSettingsJSON = []byte(`{
     "go.installDependenciesWhenBuilding": false,
 }`)
 
-var GitIgnore = []byte(`.DS_Store
-build`)
+var GitIgnore = []byte(`build`)
 
 var GoUIYML = []byte(`server:
     port: 3000
