@@ -14,13 +14,11 @@ type ServerConfig struct {
 }
 
 type BuildConfig struct {
-	Compiler string `yaml:"compiler"`
-	Panic    string `yaml:"panic"`
-	Debug    bool   `yaml:"debug"`
-	Opt      string `yaml:"opt"`
-	LDFlags  string `yaml:"ldflags"`
-	WASMOpt  bool   `yaml:"wasm_opt"`
-	NoTraps  bool   `yaml:"no_traps"`
+	Panic   string `yaml:"panic"`
+	Debug   bool   `yaml:"debug"`
+	Opt     string `yaml:"opt"`
+	WASMOpt bool   `yaml:"wasm_opt"`
+	NoTraps bool   `yaml:"no_traps"`
 }
 
 type Config struct {
@@ -40,9 +38,6 @@ func Get() *Config {
 	var cfg Config
 	if err := yaml.Unmarshal(b, &cfg); err != nil {
 		log.Fatalln(err)
-	}
-	if cfg.Build.Compiler == "" {
-		cfg.Build.Compiler = "tinygo"
 	}
 	if cfg.Build.Panic == "" {
 		cfg.Build.Panic = "trap"

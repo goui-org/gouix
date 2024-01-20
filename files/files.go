@@ -15,10 +15,81 @@ ws.onopen = () => ws.send('loaded')
 ws.onclose = () => window.close()
 `)
 
-var WasmFetchJS = []byte(`const go = new Go()
-const fetched = fetch('main.wasm')
+var WasmFetchJS = []byte(`let elements = {};
+window._GOUI_ELEMENTS = elements;
+let randInt = () => Math.floor(Math.random() * 1e9);
+let generateId = () => {
+    let id = randInt();
+    while (elements[id]) id = randInt();
+    return id;
+};
+let createElement = tag => {
+    let id = generateId();
+    elements[id] = document.createElement(tag);
+    return id;
+};
+let createElementNS = (tag, ns) => {
+    let id = generateId();
+    elements[id] = document.createElementNS(ns, tag);
+    return id;
+};
+let createTextNode = text => {
+    let id = generateId();
+    elements[id] = document.createTextNode(text);
+    return id;
+};
+let decoder = new TextDecoder();
+let memory;
+let buffer;
+let getString = (addr, length) => {
+    if (buffer.detached) buffer = memory.buffer;
+    let bytes = buffer.slice(addr, addr + length);
+    return decoder.decode(bytes);
+};
+
+let go = new Go()
+go.importObject.env = {
+    createElement: (addr, len) => createElement(getString(addr, len)),
+    createElementNS: (addr, len, addr2, len2) => createElementNS(getString(addr, len), getString(addr2, len2)),
+    createTextNode: (addr, len) => createTextNode(getString(addr, len)),
+    appendChild: (parent, child) => {
+        elements[parent].appendChild(elements[child]);
+    },
+    setStr: (node, addr, len, addr2, len2) => {
+        elements[node][getString(addr, len)] = getString(addr2, len2);
+    },
+    setClass: (node, addr, len) => {
+        elements[node].className = getString(addr, len);
+    },
+    setAriaHidden: (node, bool) => {
+        elements[node].ariaHidden = !!bool;
+    },
+    setBool: (node, addr, len, bool) => {
+        elements[node][getString(addr, len)] = !!bool;
+    },
+    replaceWith: (oldNode, newNode) => {
+        elements[oldNode].replaceWith(elements[newNode]);
+        delete elements[oldNode];
+    },
+    removeAttribute: (node, addr, len) => {
+        elements[node].removeAttribute(getString(addr, len));
+    },
+    removeNode: node => {
+        elements[node].remove();
+        delete elements[node];
+    },
+    mount: (node, addr, len) => {
+        document.querySelector(getString(addr, len)).appendChild(elements[node]);
+    },
+}
+
+let fetched = fetch('main.wasm')
 if ('instantiateStreaming' in WebAssembly) {
-    WebAssembly.instantiateStreaming(fetched, go.importObject).then(o => go.run(o.instance))
+    WebAssembly.instantiateStreaming(fetched, go.importObject).then(o => {
+        memory = o.instance.exports.memory;
+        buffer = memory.buffer;
+        go.run(o.instance)
+    })
 } else {
     fetched.then(r => r.arrayBuffer()).then(bytes =>
         WebAssembly.instantiate(bytes, go.importObject).then(o => go.run(o.instance))
@@ -150,5 +221,4 @@ var GoUIYML = []byte(`server:
     port: 3000
     # proxy: https://api.com
 build:
-    compiler: tinygo # must have tinygo installed
     # wasm_opt: true # must have wasm_opt installed`)

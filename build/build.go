@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -71,16 +70,12 @@ func (b *Build) runProd() error {
 	if err := b.resetOutDir(); err != nil {
 		return fail(err)
 	}
-	wasmExecPath := ""
-	if b.config.Build.Compiler == "tinygo" {
-		out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
-		if err != nil {
-			return fail(err)
-		}
-		wasmExecPath = path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
-	} else {
-		wasmExecPath = path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js")
+	out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
+	if err != nil {
+		return fail(err)
 	}
+	wasmExecPath := path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
+
 	wasmExec, err := os.ReadFile(wasmExecPath)
 	if err != nil {
 		return fail(err)
@@ -161,16 +156,11 @@ func (b *Build) runDebug() error {
 		if err := b.resetOutDir(); err != nil {
 			return fail(err)
 		}
-		wasmExecPath := ""
-		if b.config.Build.Compiler == "tinygo" {
-			out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
-			if err != nil {
-				return fail(err)
-			}
-			wasmExecPath = path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
-		} else {
-			wasmExecPath = path.Join(runtime.GOROOT(), "misc", "wasm", "wasm_exec.js")
+		out, err := exec.Command("tinygo", "env", "TINYGOROOT").Output()
+		if err != nil {
+			return fail(err)
 		}
+		wasmExecPath := path.Join(strings.TrimSpace(string(out)), "targets", "wasm_exec.js")
 		wasmExec, err := os.ReadFile(wasmExecPath)
 		if err != nil {
 			return fail(err)
@@ -236,42 +226,28 @@ func (b *Build) compile(outDir string) error {
 	fmt.Println("compiling src...")
 	src := path.Join("src", "main.go")
 	out := path.Join(outDir, "main.wasm")
-	switch b.config.Build.Compiler {
-	case "tinygo":
-		parts := []string{
-			"build",
-			"-target=wasm",
-			"-o",
-			out,
-		}
-		if b.prod {
-			parts = append(
-				parts,
-				fmt.Sprintf("-panic=%s", b.config.Build.Panic),
-				fmt.Sprintf("-opt=%s", b.config.Build.Opt),
-			)
-			if !b.config.Build.Debug {
-				parts = append(parts, "-no-debug")
-			}
-		}
-		parts = append(parts, src)
-		if err := utils.Command("tinygo", parts...); err != nil {
-			return err
-		}
-	case "go":
-		os.Setenv("GOOS", "js")
-		os.Setenv("GOARCH", "wasm")
-		parts := []string{"build", "-o", out}
-		if b.config.Build.LDFlags != "" {
-			parts = append(parts, fmt.Sprintf(`-ldflags="%s"`, b.config.Build.LDFlags))
-		}
-		parts = append(parts, src)
-		if err := utils.Command("go", parts...); err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("compiler %s not supported; must be go or tinygo", b.config.Build.Compiler)
+
+	parts := []string{
+		"build",
+		"-target=wasm",
+		"-o",
+		out,
 	}
+	if b.prod {
+		parts = append(
+			parts,
+			fmt.Sprintf("-panic=%s", b.config.Build.Panic),
+			fmt.Sprintf("-opt=%s", b.config.Build.Opt),
+		)
+		if !b.config.Build.Debug {
+			parts = append(parts, "-no-debug")
+		}
+	}
+	parts = append(parts, src)
+	if err := utils.Command("tinygo", parts...); err != nil {
+		return err
+	}
+
 	if b.prod && b.config.Build.WASMOpt {
 		parts := []string{"-O4", "-n", "--enable-bulk-memory", "-o", out}
 		if b.config.Build.NoTraps {
