@@ -207,7 +207,7 @@ var GoMOD = []byte(`module main
 go 1.21
 
 require (
-    github.com/twharmon/goui v0.2.0
+    github.com/twharmon/goui v0.2.1
 )
 `)
 
