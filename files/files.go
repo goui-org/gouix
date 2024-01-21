@@ -16,7 +16,6 @@ ws.onclose = () => window.close()
 `)
 
 var WasmFetchJS = []byte(`let elements = {};
-setInterval(() => console.log(Object.keys(elements).length), 1000);
 window._GOUI_ELEMENTS = elements;
 let randInt = () => Math.floor(Math.random() * 2e9);
 let generateId = () => {
