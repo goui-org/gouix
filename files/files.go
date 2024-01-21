@@ -17,7 +17,7 @@ ws.onclose = () => window.close()
 
 var WasmFetchJS = []byte(`let elements = {};
 window._GOUI_ELEMENTS = elements;
-let randInt = () => Math.floor(Math.random() * 1e9);
+let randInt = () => Math.floor(Math.random() * 2e9);
 let generateId = () => {
     let id = randInt();
     while (elements[id]) id = randInt();
@@ -40,14 +40,8 @@ let createTextNode = text => {
 };
 let decoder = new TextDecoder();
 let memory;
-let buffer;
-let getString = (addr, length) => {
-    if (buffer.detached) buffer = memory.buffer;
-    let bytes = buffer.slice(addr, addr + length);
-    return decoder.decode(bytes);
-};
-
-let go = new Go()
+let getString = (addr, len) => decoder.decode(memory.buffer.slice(addr, addr + len));
+let go = new Go();
 go.importObject.env = {
     createElement: (addr, len) => createElement(getString(addr, len)),
     createElementNS: (addr, len, addr2, len2) => createElementNS(getString(addr, len), getString(addr2, len2)),
@@ -60,6 +54,9 @@ go.importObject.env = {
     },
     setClass: (node, addr, len) => {
         elements[node].className = getString(addr, len);
+    },
+    setData: (node, addr, len) => {
+        elements[node].data = getString(addr, len);
     },
     setAriaHidden: (node, bool) => {
         elements[node].ariaHidden = !!bool;
@@ -76,25 +73,38 @@ go.importObject.env = {
     },
     removeNode: node => {
         elements[node].remove();
+    },
+    disposeNode: node => {
         delete elements[node];
     },
-    mount: (node, addr, len) => {
-        document.querySelector(getString(addr, len)).appendChild(elements[node]);
+    cloneNode: node => {
+        let clone = elements[node].cloneNode(true);
+        let id = generateId();
+        elements[id] = clone;
+        return id;
     },
-}
+    moveBefore: (parent, nextKeyMatch, start, movingDomNode) => {
+        let mdm = elements[movingDomNode];
+        let par = elements[parent];
+        let curr = par.childNodes[start];
+        if (mdm === curr) return;
+        let oldPos = mdm.nextSibling;
+        par.insertBefore(mdm, curr);
+        if (curr !== par.lastChild && !nextKeyMatch) {
+            par.insertBefore(curr, oldPos);
+        }
+    },
+    mount: (node, addr, len) => {
+        let root = document.querySelector(getString(addr, len));
+        root.appendChild(elements[node]);
+    },
+};
 
-let fetched = fetch('main.wasm')
-if ('instantiateStreaming' in WebAssembly) {
-    WebAssembly.instantiateStreaming(fetched, go.importObject).then(o => {
-        memory = o.instance.exports.memory;
-        buffer = memory.buffer;
-        go.run(o.instance)
-    })
-} else {
-    fetched.then(r => r.arrayBuffer()).then(bytes =>
-        WebAssembly.instantiate(bytes, go.importObject).then(o => go.run(o.instance))
-    )
-}`)
+WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(o => {
+    let instance = o.instance;
+    memory = instance.exports.memory;
+    go.run(instance)
+})`)
 
 var IndexHTML = []byte(`<!DOCTYPE html>
 <html lang="en">
