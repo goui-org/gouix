@@ -16,6 +16,7 @@ ws.onclose = () => window.close()
 `)
 
 var WasmFetchJS = []byte(`let elements = {};
+setInterval(() => console.log(Object.keys(elements).length), 1000);
 window._GOUI_ELEMENTS = elements;
 let randInt = () => Math.floor(Math.random() * 2e9);
 let generateId = () => {
@@ -76,12 +77,6 @@ go.importObject.env = {
     },
     disposeNode: node => {
         delete elements[node];
-    },
-    cloneNode: node => {
-        let clone = elements[node].cloneNode(true);
-        let id = generateId();
-        elements[id] = clone;
-        return id;
     },
     moveBefore: (parent, nextKeyMatch, start, movingDomNode) => {
         let mdm = elements[movingDomNode];
