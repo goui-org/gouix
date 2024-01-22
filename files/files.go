@@ -16,6 +16,7 @@ ws.onclose = () => window.close()
 `)
 
 var WasmFetchJS = []byte(`let elements = {};
+let nodes = new Map();
 window._GOUI_ELEMENTS = elements;
 let randInt = () => Math.floor(Math.random() * 2e9);
 let generateId = () => {
@@ -23,9 +24,11 @@ let generateId = () => {
     while (elements[id]) id = randInt();
     return id;
 };
-let createElement = tag => {
+let createElement = (tag, clicks) => {
     let id = generateId();
-    elements[id] = document.createElement(tag);
+    let el = document.createElement(tag);
+    elements[id] = el;
+    if (clicks) nodes.set(el, id);
     return id;
 };
 let createElementNS = (tag, ns) => {
@@ -43,7 +46,7 @@ let memory;
 let getString = (addr, len) => decoder.decode(memory.buffer.slice(addr, addr + len));
 let go = new Go();
 go.importObject.env = {
-    createElement: (addr, len) => createElement(getString(addr, len)),
+    createElement: (addr, len, clicks) => createElement(getString(addr, len), clicks),
     createElementNS: (addr, len, addr2, len2) => createElementNS(getString(addr, len), getString(addr2, len2)),
     createTextNode: (addr, len) => createTextNode(getString(addr, len)),
     appendChild: (parent, child) => {
@@ -74,8 +77,9 @@ go.importObject.env = {
     removeNode: node => {
         elements[node].remove();
     },
-    disposeNode: node => {
+    disposeNode: (node, clicks) => {
         delete elements[node];
+        if (clicks) nodes.delete(elements[node]);
     },
     moveBefore: (parent, nextKeyMatch, start, movingDomNode) => {
         let mdm = elements[movingDomNode];
@@ -96,7 +100,19 @@ go.importObject.env = {
 
 WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(o => {
     let instance = o.instance;
-    memory = instance.exports.memory;
+    let exports = instance.exports;
+    window.addEventListener('click', e => {
+        let target = e.target;
+        while (target) {
+            let node = nodes.get(target);
+            if (node) {
+                window._GOUI_EVENT = e;
+                exports.callClickListener(node);
+            }
+            target = target.parentNode;
+        }
+    });
+    memory = exports.memory;
     go.run(instance)
 })`)
 
@@ -207,7 +223,7 @@ var GoMOD = []byte(`module main
 go 1.21
 
 require (
-    github.com/twharmon/goui v0.2.1
+    github.com/twharmon/goui v0.2.2
 )
 `)
 
