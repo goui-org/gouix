@@ -21,15 +21,15 @@ let createElementNS = (tag, ns, clicks) => {
     if (clicks) nodes.set(el, id);
     return id;
 };
-let createTextNode = text => {
+let createEmptyTextNode = () => {
     let id = generateId();
-    elements[id] = document.createTextNode(text);
+    elements[id] = document.createTextNode('');
     return id;
 };
 let decoder = new TextDecoder();
 let memory;
 let exports;
-let getString = (addr, len) => decoder.decode(memory.buffer.slice(addr, addr + len));
+let getString = (addr, len) => len ? decoder.decode(memory.buffer.slice(addr, addr + len)) : '';
 let go = new Go();
 go.importObject.env = {
     createElement: (addr, len, clicks) => createElement(getString(addr, len), clicks),
@@ -43,18 +43,18 @@ go.importObject.env = {
     createH1: clicks => createElement('h1', clicks),
     createButton: clicks => createElement('button', clicks),
     createElementNS: (addr, len, addr2, len2, clicks) => createElementNS(getString(addr, len), getString(addr2, len2), clicks),
-    createTextNode: (addr, len) => createTextNode(getString(addr, len)),
+    createEmptyTextNode: () => createEmptyTextNode(),
     appendChild: (parent, child) => {
         elements[parent].appendChild(elements[child]);
     },
     setStr: (node, addr, len, addr2, len2) => {
         elements[node][getString(addr, len)] = getString(addr2, len2);
     },
+    setTextContent: (node, addr, len) => {
+        elements[node].textContent = getString(addr, len);
+    },
     setClass: (node, addr, len) => {
         elements[node].className = getString(addr, len);
-    },
-    setData: (node, addr, len) => {
-        elements[node].data = getString(addr, len);
     },
     setAriaHidden: (node, bool) => {
         elements[node].ariaHidden = !!bool;
@@ -115,4 +115,4 @@ WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(o => 
     exports = instance.exports;
     memory = exports.memory;
     go.run(instance);
-})
+});
