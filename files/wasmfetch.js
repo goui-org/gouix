@@ -21,9 +21,9 @@ let createElementNS = (tag, ns, clicks) => {
     if (clicks) nodes.set(el, id);
     return id;
 };
-let createEmptyTextNode = () => {
+let createTextNode = text => {
     let id = generateId();
-    elements[id] = document.createTextNode('');
+    elements[id] = document.createTextNodet(text);
     return id;
 };
 let decoder = new TextDecoder();
@@ -43,7 +43,7 @@ go.importObject.env = {
     createH1: clicks => createElement('h1', clicks),
     createButton: clicks => createElement('button', clicks),
     createElementNS: (addr, len, addr2, len2, clicks) => createElementNS(getString(addr, len), getString(addr2, len2), clicks),
-    createEmptyTextNode: () => createEmptyTextNode(),
+    createTextNode: (addr, len) => createTextNode(getString(addr, len)),
     appendChild: (parent, child) => {
         elements[parent].appendChild(elements[child]);
     },
