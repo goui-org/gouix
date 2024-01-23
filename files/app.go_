@@ -10,7 +10,7 @@ func App(goui.NoProps) *goui.Node {
 	count, setCount := goui.UseState(0)
 
 	goui.UseEffect(func() goui.EffectTeardown {
-		goui.Log("count is %d", count)
+		goui.Log("count is", count)
 		return nil
 	}, goui.Deps{count})
 
@@ -20,14 +20,14 @@ func App(goui.NoProps) *goui.Node {
 
 	return goui.Element("div", &goui.Attributes{
 		Class: "app",
-		Children: goui.Children{
+		Slot: []*goui.Node{
 			goui.Element("button", &goui.Attributes{
-				Class:    "app-btn",
-				Children: goui.Children{goui.Text("increment")},
+				Class:   "app-btn",
+				Slot:    "increment",
 				OnClick: handleIncrement,
 			}),
 			goui.Element("p", &goui.Attributes{
-				Children: goui.Children{goui.Text("count: " + strconv.Itoa(count))},
+				Slot: "count: " + strconv.Itoa(count),
 			}),
 		},
 	})

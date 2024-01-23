@@ -14,9 +14,11 @@ let createElement = (tag, clicks) => {
     if (clicks) nodes.set(el, id);
     return id;
 };
-let createElementNS = (tag, ns) => {
+let createElementNS = (tag, ns, clicks) => {
     let id = generateId();
-    elements[id] = document.createElementNS(ns, tag);
+    let el = document.createElementNS(ns, tag);
+    elements[id] = el;
+    if (clicks) nodes.set(el, id);
     return id;
 };
 let createTextNode = text => {
@@ -40,7 +42,7 @@ go.importObject.env = {
     createTbody: clicks => createElement('tbody', clicks),
     createH1: clicks => createElement('h1', clicks),
     createButton: clicks => createElement('button', clicks),
-    createElementNS: (addr, len, addr2, len2) => createElementNS(getString(addr, len), getString(addr2, len2)),
+    createElementNS: (addr, len, addr2, len2, clicks) => createElementNS(getString(addr, len), getString(addr2, len2), clicks),
     createTextNode: (addr, len) => createTextNode(getString(addr, len)),
     appendChild: (parent, child) => {
         elements[parent].appendChild(elements[child]);
@@ -70,8 +72,9 @@ go.importObject.env = {
     removeNode: node => {
         elements[node].remove();
     },
-    disposeNode: (node, clicks) => {
-        if (clicks) nodes.delete(elements[node]);
+    disposeNode: node => {
+        let el = elements[node];
+        if (nodes.has(el)) nodes.delete(el);
         delete elements[node];
     },
     cloneNode: node => {
@@ -94,11 +97,11 @@ go.importObject.env = {
         let root = document.querySelector(getString(addr, len));
         root.appendChild(elements[node]);
         root.addEventListener('click', e => {
+            window._GOUI_EVENT = e;
             let target = e.target;
             while (target && target != root) {
                 let node = nodes.get(target);
                 if (node) {
-                    window._GOUI_EVENT = e;
                     exports.callClickListener(node);
                 }
                 target = target.parentNode;
@@ -111,5 +114,5 @@ WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(o => 
     let instance = o.instance;
     exports = instance.exports;
     memory = exports.memory;
-    go.run(instance)
+    go.run(instance);
 })

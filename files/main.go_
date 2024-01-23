@@ -7,5 +7,5 @@ import (
 )
 
 func main() {
-	goui.Mount("#root", goui.Component(app.App, nil))
+	goui.Mount("#root", app.App)
 }
