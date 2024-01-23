@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/twharmon/gouix/build"
-	"github.com/twharmon/gouix/config"
-	"github.com/twharmon/gouix/create"
-	"github.com/twharmon/gouix/serve"
+	"github.com/goui-org/gouix/build"
+	"github.com/goui-org/gouix/config"
+	"github.com/goui-org/gouix/create"
+	"github.com/goui-org/gouix/serve"
 
 	"github.com/urfave/cli/v2"
 )

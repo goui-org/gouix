@@ -6,8 +6,8 @@ import (
 	"path"
 
 	"github.com/fatih/color"
-	"github.com/twharmon/gouix/files"
-	"github.com/twharmon/gouix/utils"
+	"github.com/goui-org/gouix/files"
+	"github.com/goui-org/gouix/utils"
 )
 
 func Create(name string) error {

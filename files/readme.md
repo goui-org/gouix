@@ -2,7 +2,7 @@
 
 Intall gouix
 ```sh
-go install github.com/twharmon/gouix@latest
+go install github.com/goui-org/gouix@latest
 ```
 
 Start the development server

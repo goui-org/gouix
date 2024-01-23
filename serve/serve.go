@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/twharmon/gouix/config"
-	"github.com/twharmon/gouix/server"
+	"github.com/goui-org/gouix/config"
+	"github.com/goui-org/gouix/server"
 )
 
 func Start(cfg *config.Config) error {

@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goui-org/gouix/config"
+	"github.com/goui-org/gouix/files"
+	"github.com/goui-org/gouix/utils"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/css"
 	"github.com/tdewolff/minify/v2/html"
 	"github.com/tdewolff/minify/v2/js"
-	"github.com/twharmon/gouix/config"
-	"github.com/twharmon/gouix/files"
-	"github.com/twharmon/gouix/utils"
 
 	"github.com/fatih/color"
 	"github.com/twharmon/gouid"

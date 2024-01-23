@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/twharmon/gouix/build"
-	"github.com/twharmon/gouix/config"
-	"github.com/twharmon/gouix/utils"
+	"github.com/goui-org/gouix/build"
+	"github.com/goui-org/gouix/config"
+	"github.com/goui-org/gouix/utils"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gorilla/websocket"
