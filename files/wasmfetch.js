@@ -31,7 +31,7 @@ let memory;
 let exports;
 let getString = (addr, len) => len ? decoder.decode(memory.buffer.slice(addr, addr + len)) : '';
 let go = new Go();
-go.importObject.env = {
+Object.assign(go.importObject.gojs, {
     createElement: (addr, len, clicks) => createElement(getString(addr, len), clicks),
     createTd: clicks => createElement('td', clicks),
     createTr: clicks => createElement('tr', clicks),
@@ -45,6 +45,7 @@ go.importObject.env = {
     createElementNS: (addr, len, addr2, len2, clicks) => createElementNS(getString(addr, len), getString(addr2, len2), clicks),
     createTextNode: (addr, len) => createTextNode(getString(addr, len)),
     appendChild: (parent, child) => {
+        console.log('appendChild', parent, child);
         elements[parent].appendChild(elements[child]);
     },
     setStr: (node, addr, len, addr2, len2) => {
@@ -70,7 +71,13 @@ go.importObject.env = {
         elements[node].removeAttribute(getString(addr, len));
     },
     removeNode: node => {
-        elements[node].remove();
+        if (elements[node]) {
+            
+            elements[node].remove();
+        } else {
+            console.log('rm', node);
+
+        }
     },
     disposeNode: node => {
         let el = elements[node];
@@ -108,7 +115,7 @@ go.importObject.env = {
             }
         });
     },
-};
+});
 
 WebAssembly.instantiateStreaming(fetch('main.wasm'), go.importObject).then(o => {
     let instance = o.instance;

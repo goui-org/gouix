@@ -3,7 +3,7 @@ package main
 import (
 	"main/src/app"
 
-	"github.com/twharmon/goui"
+	"github.com/goui-org/goui"
 )
 
 func main() {

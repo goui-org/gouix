@@ -230,6 +230,7 @@ func (b *Build) compile(outDir string) error {
 	parts := []string{
 		"build",
 		"-target=wasm",
+		// "-gc=precise",
 		"-o",
 		out,
 	}
@@ -238,7 +239,6 @@ func (b *Build) compile(outDir string) error {
 			parts,
 			fmt.Sprintf("-panic=%s", b.config.Build.Panic),
 			fmt.Sprintf("-opt=%s", b.config.Build.Opt),
-			"-gc=leaking",
 		)
 		if !b.config.Build.Debug {
 			parts = append(parts, "-no-debug")
