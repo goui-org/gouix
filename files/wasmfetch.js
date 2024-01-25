@@ -23,7 +23,7 @@ let createElementNS = (tag, ns, clicks) => {
 };
 let createTextNode = text => {
     let id = generateId();
-    elements[id] = document.createTextNodet(text);
+    elements[id] = document.createTextNode(text);
     return id;
 };
 let decoder = new TextDecoder();
@@ -45,7 +45,6 @@ Object.assign(go.importObject.gojs, {
     createElementNS: (addr, len, addr2, len2, clicks) => createElementNS(getString(addr, len), getString(addr2, len2), clicks),
     createTextNode: (addr, len) => createTextNode(getString(addr, len)),
     appendChild: (parent, child) => {
-        console.log('appendChild', parent, child);
         elements[parent].appendChild(elements[child]);
     },
     setStr: (node, addr, len, addr2, len2) => {
@@ -53,6 +52,9 @@ Object.assign(go.importObject.gojs, {
     },
     setTextContent: (node, addr, len) => {
         elements[node].textContent = getString(addr, len);
+    },
+    setData: (node, addr, len) => {
+        elements[node].data = getString(addr, len);
     },
     setClass: (node, addr, len) => {
         elements[node].className = getString(addr, len);

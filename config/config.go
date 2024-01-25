@@ -14,11 +14,12 @@ type ServerConfig struct {
 }
 
 type BuildConfig struct {
-	Panic   string `yaml:"panic"`
-	Debug   bool   `yaml:"debug"`
-	Opt     string `yaml:"opt"`
-	WASMOpt bool   `yaml:"wasm_opt"`
-	NoTraps bool   `yaml:"no_traps"`
+	Panic        string `yaml:"panic"`
+	Debug        bool   `yaml:"debug"`
+	Opt          string `yaml:"opt"`
+	WASMOpt      bool   `yaml:"wasm_opt"`
+	NoTraps      bool   `yaml:"no_traps"`
+	CompilerPath string `yaml:"compiler_path"`
 }
 
 type Config struct {
@@ -47,6 +48,9 @@ func Get() *Config {
 	}
 	if cfg.Server.Port == 0 {
 		cfg.Server.Port = 3000
+	}
+	if cfg.Build.CompilerPath == "" {
+		cfg.Build.CompilerPath = "tinygo"
 	}
 	return &cfg
 }

@@ -245,7 +245,7 @@ func (b *Build) compile(outDir string) error {
 		}
 	}
 	parts = append(parts, src)
-	if err := utils.Command("tinygo", parts...); err != nil {
+	if err := utils.Command(b.config.Build.CompilerPath, parts...); err != nil {
 		return err
 	}
 
