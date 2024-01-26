@@ -45,6 +45,10 @@ func New(cfg *config.Config) *Build {
 	return b
 }
 
+func (b *Build) ReplaceConfig(cfg *config.Config) {
+	b.config = cfg
+}
+
 func (b *Build) BuildDir() string {
 	if os.Getenv("DEBUG") == "true" {
 		return path.Join(os.TempDir(), b.id)

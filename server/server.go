@@ -119,6 +119,19 @@ func (s *Server) ws() http.HandlerFunc {
 }
 
 func (s *Server) watch() {
+	var q []struct{}
+	flush := func() {
+		if len(q) > 0 {
+			q = q[:0]
+			s.config = config.Get()
+			s.build.ReplaceConfig(s.config)
+			if err := s.build.Run(); err != nil {
+				s.reportBuildError(fmt.Errorf("devserver.Server.watch: %s", err))
+			} else {
+				s.sendMessage("reload")
+			}
+		}
+	}
 	for {
 		select {
 		case event, ok := <-s.watcher.Events:
@@ -126,11 +139,8 @@ func (s *Server) watch() {
 				return
 			}
 			if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove) > 0 {
-				if err := s.build.Run(); err != nil {
-					s.reportBuildError(fmt.Errorf("devserver.Server.watch: %s", err))
-				} else {
-					s.sendMessage("reload")
-				}
+				q = append(q, struct{}{})
+				time.AfterFunc(time.Millisecond*10, flush)
 			}
 		case err, ok := <-s.watcher.Errors:
 			if !ok {
@@ -152,16 +162,16 @@ func (s *Server) watchAll() error {
 	if err != nil {
 		return fmt.Errorf("devserver.Server.getWatcher: %w", err)
 	}
-	if err := s.watchDir("src"); err != nil {
-		return fmt.Errorf("devserver.Server.watchAll: %w", err)
-	}
-	if err := s.watchDir("public"); err != nil {
+	if err := s.watchDir("."); err != nil {
 		return fmt.Errorf("devserver.Server.watchAll: %w", err)
 	}
 	return nil
 }
 
 func (s *Server) watchDir(dir string) error {
+	if dir == path.Join(".", "build") {
+		return nil
+	}
 	if err := s.watcher.Add(dir); err != nil {
 		return fmt.Errorf("devserver.Server.watchDir: %w", err)
 	}
