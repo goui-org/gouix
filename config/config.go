@@ -14,12 +14,14 @@ type ServerConfig struct {
 }
 
 type BuildConfig struct {
-	Panic        string `yaml:"panic"`
-	Debug        bool   `yaml:"debug"`
-	Opt          string `yaml:"opt"`
-	WASMOpt      bool   `yaml:"wasm_opt"`
-	NoTraps      bool   `yaml:"no_traps"`
-	CompilerPath string `yaml:"compiler_path"`
+	Panic   string `yaml:"panic"`
+	Debug   bool   `yaml:"debug"`
+	Opt     string `yaml:"opt"`
+	WASMOpt bool   `yaml:"wasm_opt"`
+	// NoTraps tells wasm-opt that traps never happen
+	NoTraps          bool   `yaml:"no_traps"`
+	CompilerPath     string `yaml:"compiler_path"`
+	GarbageCollector string `yaml:"garbage_collector"`
 }
 
 type Config struct {
@@ -41,7 +43,7 @@ func Get() *Config {
 		log.Fatalln(err)
 	}
 	if cfg.Build.Panic == "" {
-		cfg.Build.Panic = "trap"
+		cfg.Build.Panic = "print"
 	}
 	if cfg.Build.Opt == "" {
 		cfg.Build.Opt = "2"
@@ -51,6 +53,9 @@ func Get() *Config {
 	}
 	if cfg.Build.CompilerPath == "" {
 		cfg.Build.CompilerPath = "tinygo"
+	}
+	if cfg.Build.GarbageCollector == "" {
+		cfg.Build.GarbageCollector = "conservative"
 	}
 	return &cfg
 }

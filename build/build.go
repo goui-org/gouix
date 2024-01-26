@@ -231,29 +231,28 @@ func (b *Build) compile(outDir string) error {
 	src := path.Join("src", "main.go")
 	out := path.Join(outDir, "main.wasm")
 
+	panicOpt := b.config.Build.Panic
+	if b.config.Build.WASMOpt && b.config.Build.NoTraps {
+		panicOpt = "trap"
+	}
 	parts := []string{
 		"build",
 		"-target=wasm",
-		// "-gc=precise",
+		fmt.Sprintf("-gc=%s", b.config.Build.GarbageCollector),
+		fmt.Sprintf("-panic=%s", panicOpt),
+		fmt.Sprintf("-opt=%s", b.config.Build.Opt),
 		"-o",
 		out,
 	}
-	if b.prod {
-		parts = append(
-			parts,
-			fmt.Sprintf("-panic=%s", b.config.Build.Panic),
-			fmt.Sprintf("-opt=%s", b.config.Build.Opt),
-		)
-		if !b.config.Build.Debug {
-			parts = append(parts, "-no-debug")
-		}
+	if !b.config.Build.Debug {
+		parts = append(parts, "-no-debug")
 	}
 	parts = append(parts, src)
 	if err := utils.Command(b.config.Build.CompilerPath, parts...); err != nil {
 		return err
 	}
 
-	if b.prod && b.config.Build.WASMOpt {
+	if b.config.Build.WASMOpt {
 		parts := []string{"-O4", "-n", "--enable-bulk-memory", "-o", out}
 		if b.config.Build.NoTraps {
 			parts = append(parts, "-tnh")
