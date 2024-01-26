@@ -3,5 +3,5 @@ module main
 go 1.21
 
 require (
-    github.com/goui-org/goui v0.2.7
+    github.com/goui-org/goui v0.2.8
 )
